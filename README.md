@@ -1,26 +1,31 @@
+Upload imagine cu watermark
+
+Endpoint:
 POST /images/upload/
 
-Încarcă o imagine PNG/JPEG și salvează un record în baza de date.
+Descriere:
+Încarcă o imagine și o imagine de tip watermark, aplică watermarking folosind metoda selectată, calculează metricile PSNR și BER și salvează rezultatul în baza de date.
 
-Body (form-data):
+Tip request:
+multipart/form-data
 
-Field	Type	Description
-file	File	Imagine PNG sau JPEG
-method	Text	Metoda de watermarking (ex: DCT)
+Câmpuri request:
+	•	file (File, obligatoriu) – imaginea originală (PNG sau JPEG)
+	•	watermark_file (File, obligatoriu) – imaginea watermark (PNG sau JPEG)
+	•	method (String, obligatoriu) – metoda de watermarking (ex: DWT)
 
-Exemplu curl:
-
-curl -X POST "http://127.0.0.1:8000/images/upload/" \
-  -F "file=@/cale/catre/imagine.png" \
-  -F "method=DCT"
-
-Răspuns:
+Răspuns (200 OK):
 
 {
-  "message": "Image uploaded and saved successfully"
+  "message": "Image uploaded, watermarked and saved successfully",
+  "filename": "exemplu.jpg",
+  "method": "DWT",
+  "psnr": 41.09,
+  "ber": 0.0,
+  "width": 530,
+  "height": 530,
+  "format": "image/jpeg"
 }
 
-Erori:
-	•	Format invalid: "Image must be PNG or JPEG"
-	•	Dimensiune prea mică: "Image too small"
-	•	Dimensiune prea mare: "Image too large"
+Erori posibile:
+	•	400 Bad Request – format de imagine invalid, dimensiuni nepermise sau metodă de watermarking neacceptată.
