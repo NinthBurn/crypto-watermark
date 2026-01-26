@@ -1,0 +1,5 @@
+Pentru a crea mediul de lucru cu FastAPI, SQLLite rulati in terminal:
+
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
