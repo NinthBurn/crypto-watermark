@@ -1,6 +1,6 @@
 import matplotlib.pyplot as plt
 from PIL import Image
-from watermark.dct import DCTWatermark
+from watermarking.DCT import DCTWatermark
 
 if __name__ == '__main__':
     block_size = 8
