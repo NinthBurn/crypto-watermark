@@ -52,6 +52,7 @@ async def upload_image(
         
         match method:
             case "DWT":
+                print("in controller dwt")
                 record, watermarked_path = service.create_image(
                     filename=file.filename,
                     method=method,
