@@ -79,7 +79,7 @@ async def upload_image(
                     wm.save_grayscale(embedded, watermarked_path)
                 
             case "HYBRID":
-                wm = HybridWatermark(dct_block_size, (dct_coeffs, dct_coeffs))
+                wm = HybridWatermark(block_size=dct_block_size, coeff_pos=(dct_coeffs, dct_coeffs), alpha=15.0, image_size=image_size)
                 watermarked_path = os.path.join(UPLOAD_DIR, f"watermarked_{file.filename}")
                 wm.embed(image_path, wm_path, watermarked_path)
                 
@@ -178,9 +178,9 @@ async def extract_watermark(
                     wm.save_grayscale(extracted_watermark, extracted_path)
 
             case "HYBRID":
-                wm = HybridWatermark(dct_block_size, (dct_coeffs, dct_coeffs))
-                array = wm.extract(attacked_path, (watermark_size, watermark_size))
-                Image.fromarray(array).save(extracted_path)
+                wm = HybridWatermark(block_size=dct_block_size, coeff_pos=(dct_coeffs, dct_coeffs), alpha=15.0, image_size=image_size)
+                extracted_img = wm.extract(attacked_path, wm_shape=(watermark_size, watermark_size))
+                extracted_img.save(extracted_path)
 
             case _:
                 raise HTTPException(

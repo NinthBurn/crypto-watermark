@@ -19,15 +19,9 @@ class HybridWatermark:
 
     def embed(self, image_path, watermark_path, output_path):
 
-        img = Image.open(image_path)
-        img = img.resize(
-            (self.image_size, self.image_size),
-            Image.Resampling.BICUBIC
-        )
+        img = Image.open(image_path).resize((self.image_size, self.image_size), Image.Resampling.BICUBIC)
 
-        cb = cr = None
         is_rgb = img.mode == "RGB"
-
         if is_rgb:
             ycbcr = img.convert("YCbCr")
             y, cb, cr = ycbcr.split()
@@ -41,31 +35,17 @@ class HybridWatermark:
         num_blocks_h = LH.shape[0] // self.block_size
         num_blocks_w = LH.shape[1] // self.block_size
 
-        # watermark
         watermark = Image.open(watermark_path).convert("L")
-        watermark = watermark.resize(
-            (num_blocks_w, num_blocks_h), Image.Resampling.BICUBIC
-        )
-        wm = np.array(watermark, dtype=np.float32) / 255.0
-        wm = (wm > 0.5).astype(np.float32).flatten()
-        wm = wm[:num_blocks_h * num_blocks_w]
+        watermark = watermark.resize((num_blocks_w, num_blocks_h), Image.Resampling.BICUBIC)
+        wm = (np.array(watermark) > 127).astype(np.int32)  # 0 sau 1
 
-        idx = 0
-        for i in range(0, num_blocks_h * self.block_size, self.block_size):
-            for j in range(0, num_blocks_w * self.block_size, self.block_size):
-
-                if idx >= len(wm):
-                    break
-
-                block = LH[i:i + self.block_size, j:j + self.block_size]
+        for i in range(num_blocks_h):
+            for j in range(num_blocks_w):
+                block = LH[i * self.block_size:(i + 1) * self.block_size, j * self.block_size:(j + 1) * self.block_size]
                 dct_block = self.apply_dct_block(block)
-
-                dct_block[self.cx, self.cy] += self.alpha * wm[idx]
-
-                LH[i:i + self.block_size, j:j + self.block_size] = \
-                    self.inverse_dct_block(dct_block)
-
-                idx += 1
+                dct_block[self.cx, self.cy] += self.alpha * (2 * wm[i, j] - 1)
+                LH[i * self.block_size:(i + 1) * self.block_size,
+                j * self.block_size:(j + 1) * self.block_size] = self.inverse_dct_block(dct_block)
 
         watermarked_channel = pywt.idwt2((LL, (LH, HL, HH)), 'haar')
         watermarked_channel = np.clip(watermarked_channel, 0, 255).astype(np.uint8)
@@ -80,8 +60,7 @@ class HybridWatermark:
 
     def extract(self, watermarked_path, wm_shape):
 
-        img = Image.open(watermarked_path)
-        img = img.resize((self.image_size, self.image_size), Image.Resampling.BICUBIC)
+        img = Image.open(watermarked_path).resize((self.image_size, self.image_size), Image.Resampling.BICUBIC)
 
         if img.mode == "RGB":
             y = img.convert("YCbCr").split()[0]
@@ -95,15 +74,15 @@ class HybridWatermark:
         num_blocks_h = LH.shape[0] // self.block_size
         num_blocks_w = LH.shape[1] // self.block_size
 
-        extracted = []
-        for i in range(0, num_blocks_h * self.block_size, self.block_size):
-            for j in range(0, num_blocks_w * self.block_size, self.block_size):
-                block = LH[i:i + self.block_size, j:j + self.block_size]
+        extracted = np.zeros((num_blocks_h, num_blocks_w), dtype=np.int32)
+        for i in range(num_blocks_h):
+            for j in range(num_blocks_w):
+                block = LH[i * self.block_size:(i + 1) * self.block_size, j * self.block_size:(j + 1) * self.block_size]
                 dct_block = self.apply_dct_block(block)
-                val = dct_block[self.cx, self.cy] / self.alpha
-                extracted.append(val)
+                # Thresholding pentru a decide 0 sau 1
+                extracted[i, j] = 1 if dct_block[self.cx, self.cy] > 0 else 0
 
-        wm = np.array(extracted[:num_blocks_h * num_blocks_w])
-        wm = wm.reshape((num_blocks_h, num_blocks_w))
-        wm = np.clip(wm * 255, 0, 255).astype(np.uint8)
-        return wm
+        # Scale la 0-255
+        wm_img = (extracted * 255).astype(np.uint8)
+        wm_img = Image.fromarray(wm_img).resize(wm_shape, Image.Resampling.BICUBIC)
+        return wm_img

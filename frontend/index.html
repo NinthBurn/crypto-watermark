@@ -3,57 +3,46 @@
 
 <head>
   <meta charset="UTF-8" />
-  <title>Watermark Tool</title>
+  <title>Digital Watermarking Tool</title>
   <link rel="stylesheet" href="styles.css">
 </head>
 
 <body>
 
   <div class="container">
-    <h2 style="text-align: center; margin-bottom: 24px;">Configuration</h2>
-    <!-- Row 1: Options Panel -->
+
+    <h2 style="text-align: center; margin-bottom: 16px;">Algorithm Configuration</h2>
+    <p style="text-align: center; opacity: 0.7; margin-bottom: 24px;">
+      Set the parameters used by the watermarking algorithms.
+      These parameters must be consistent for embedding and extraction.
+    </p>
+
     <div class="options-panel">
 
       <div class="numeric-options">
         <div class="option-item">
           <label for="image-size">Image Size:</label>
-          <input type="number" id="image-size" min="0" value="512">
+          <input type="number" id="image-size" value="512">
         </div>
 
         <div class="option-item">
           <label for="watermark-size">Watermark Size:</label>
-          <input type="number" id="watermark-size" min="0" value="32">
+          <input type="number" id="watermark-size" value="32">
         </div>
 
         <div class="option-item">
           <label for="dct-block-size">DCT Block Size:</label>
-          <input type="number" id="dct-block-size" min="0" value="8">
+          <input type="number" id="dct-block-size" value="8">
         </div>
 
         <div class="option-item">
           <label for="dct-coeffs">DCT Coefficients:</label>
-          <input type="number" id="dct-coeffs" min="0" value="5">
+          <input type="number" id="dct-coeffs" value="5">
         </div>
       </div>
 
       <div class="option-item">
-          <label for="attack-type">Attack Type:</label>
-          <select id="attack-type" style="padding: 8px 12px; border-radius: 8px; border: 1.5px solid #cbd5e1; outline: none;">
-            <option value="">None</option>
-            <option value="NOISE">Gaussian Noise</option>
-            <option value="BLUR">Gaussian Blur</option>
-            <option value="JPEG">JPEG Compression</option>
-          </select>
-        </div>
-
-        <div class="option-item">
-          <label for="attack-param">Attack Intensity:</label>
-          <input type="number" id="attack-param" step="0.01" placeholder="e.g. 30 or 0.01">
-        </div>
-        </div>
-
-      <div class="option-item">
-        <label for="embed-method">Method:</label>
+        <label>Watermarking Method:</label>
         <div class="methods">
           <label class="method-option">
             <input type="radio" name="embed-method" value="DCT" checked>
@@ -71,7 +60,7 @@
       </div>
 
       <div class="option-item">
-        <label for="embed-format">File format:</label>
+        <label>Output Format:</label>
         <div class="methods">
           <label class="method-option">
             <input type="radio" name="embed-format" value="JPG" checked>
@@ -86,129 +75,155 @@
 
       <div class="option-item checkbox-option">
         <label>
-          <input type="checkbox" style="align-items: center;" id="colored-image">
+          <input type="checkbox" id="colored-image">
           <span>Colored Image</span>
         </label>
       </div>
 
     </div>
 
-
     <hr />
 
-    <!-- Row 2: Embed -->
-    <h2 style="text-align: center; margin-bottom: 24px;">Embedding</h2>
+    <h2 style="text-align: center; margin-bottom: 16px;">Embed Watermark</h2>
+    <p style="text-align: center; opacity: 0.7; margin-bottom: 24px;">
+      Insert a watermark into the original image using the selected method.
+    </p>
+
     <div class="embed-row">
       <div class="embed-left">
 
         <input type="file" id="embed-image" accept="image/png,image/jpeg" hidden>
-
-        <div class="preview-box" style="width: 50%;" id="embed-image-box">
-          <img id="embed-image-preview" alt="Original image">
-          <span class="placeholder">Image</span>
+        <div class="preview-box" id="embed-image-box">
+          <img id="embed-image-preview">
+          <span class="placeholder">Original Image</span>
         </div>
 
         <input type="file" id="embed-watermark" accept="image/png,image/jpeg" hidden>
-
-        <div class="preview-box" style="width: 50%;" id="embed-watermark-box">
-          <img id="embed-watermark-preview" alt="Watermark image">
+        <div class="preview-box" id="embed-watermark-box">
+          <img id="embed-watermark-preview">
           <span class="placeholder">Watermark</span>
         </div>
 
-        <button id="embed-btn" class="primary-btn">Embed</button>
+        <button id="embed-btn" class="primary-btn">Embed Watermark</button>
       </div>
 
       <div class="embed-right">
-        <div class="preview-box large" style="width: 75%;">
-          <img id="embed-result" alt="Watermarked result">
-          <span class="placeholder">Result</span>
+        <div class="preview-box large">
+          <img id="embed-result">
+          <span class="placeholder">Watermarked Image</span>
         </div>
       </div>
     </div>
 
     <hr />
 
-    <!-- Row 3: Extract -->
-    <h2 style="text-align: center; margin-bottom: 24px;">Extraction</h2>
+    <h2 style="text-align: center; margin-bottom: 16px;">Attack Simulation (Optional)</h2>
+    <p style="text-align: center; opacity: 0.7; margin-bottom: 24px;">
+      Apply an attack to the watermarked image to evaluate watermark robustness.
+      Attacks are applied <b>only before extraction</b>.
+    </p>
+
+    <div class="options-panel">
+
+      <div class="option-item">
+        <label for="attack-type">Attack Type:</label>
+        <select id="attack-type">
+          <option value="">None</option>
+          <option value="NOISE">Gaussian Noise</option>
+          <option value="BLUR">Gaussian Blur</option>
+          <option value="JPEG">JPEG Compression</option>
+        </select>
+      </div>
+
+      <div class="option-item">
+        <label for="attack-param">Attack Intensity:</label>
+        <input type="number" id="attack-param" step="0.01" placeholder="e.g. 0.01 or 30">
+      </div>
+
+    </div>
+
+    <hr />
+
+    <h2 style="text-align: center; margin-bottom: 16px;">Extract Watermark</h2>
+    <p style="text-align: center; opacity: 0.7; margin-bottom: 24px;">
+      Extract the watermark from the (possibly attacked) watermarked image.
+    </p>
+
     <div class="embed-row">
       <div class="embed-left">
 
         <input type="file" id="extract-original" accept="image/png,image/jpeg" hidden>
-
-        <div class="preview-box" style="width: 50%;" id="extract-original-box">
-          <img id="extract-original-preview" alt="Original image">
-          <span class="placeholder">Original image</span>
+        <div class="preview-box" id="extract-original-box">
+          <img id="extract-original-preview">
+          <span class="placeholder">Original Image</span>
         </div>
 
         <input type="file" id="extract-watermarked" accept="image/png,image/jpeg" hidden>
-
-        <div class="preview-box" style="width: 50%;" id="extract-watermarked-box">
-          <img id="extract-watermarked-preview" alt="Watermarked image">
-          <span class="placeholder">Watermarked image</span>
+        <div class="preview-box" id="extract-watermarked-box">
+          <img id="extract-watermarked-preview">
+          <span class="placeholder">Watermarked / Attacked Image</span>
         </div>
 
-        <button id="extract-btn" class="primary-btn">Extract</button>
+        <button id="extract-btn" class="primary-btn">Extract Watermark</button>
       </div>
 
       <div class="embed-right">
-        <div class="preview-box" style="width: 75%;">
-          <img id="extract-result" alt="Extracted watermark" style="width: 100%; height: 100%;">
-          <span class="placeholder">Extracted watermark</span>
+        <div class="preview-box">
+          <img id="extract-result">
+          <span class="placeholder">Extracted Watermark</span>
         </div>
       </div>
     </div>
 
     <hr />
 
-    <!-- Row 4: Metrics Panel -->
+    <h2 style="text-align: center; margin-bottom: 16px;">Quality Metrics</h2>
+    <p style="text-align: center; opacity: 0.7; margin-bottom: 24px;">
+      Compute PSNR and BER to evaluate imperceptibility and robustness.
+    </p>
+
     <div class="metrics-panel">
 
       <div class="metrics-inputs">
         <div class="preview-box" id="metrics-image1-box">
-          <input type="file" id="metrics-image1" accept="image/png,image/jpeg" hidden>
-          <img id="metrics-image1-preview" alt="Image 1">
+          <input type="file" id="metrics-image1" hidden>
+          <img id="metrics-image1-preview">
           <span class="placeholder">Original Image</span>
         </div>
 
         <div class="preview-box" id="metrics-image2-box">
-          <input type="file" id="metrics-image2" accept="image/png,image/jpeg" hidden>
-          <img id="metrics-image2-preview" alt="Image 2">
+          <input type="file" id="metrics-image2" hidden>
+          <img id="metrics-image2-preview">
           <span class="placeholder">Watermarked Image</span>
         </div>
 
         <div class="preview-box" id="metrics-image3-box">
-          <input type="file" id="metrics-image3" accept="image/png,image/jpeg" hidden>
-          <img id="metrics-image3-preview" alt="Image 3">
+          <input type="file" id="metrics-image3" hidden>
+          <img id="metrics-image3-preview">
           <span class="placeholder">Original Watermark</span>
         </div>
 
         <div class="preview-box" id="metrics-image4-box">
-          <input type="file" id="metrics-image4" accept="image/png,image/jpeg" hidden>
-          <img id="metrics-image4-preview" alt="Image 4">
+          <input type="file" id="metrics-image4" hidden>
+          <img id="metrics-image4-preview">
           <span class="placeholder">Extracted Watermark</span>
         </div>
       </div>
 
-      <!-- Results -->
-      <div style="display: flex; flex-direction: column;">
-
+      <div>
         <button id="metrics-btn" class="primary-btn">Compute Metrics</button>
         <div class="metrics-results">
-
-          <div class="metric-item">
-            <strong>PSNR:</strong> <span id="psnr-value">--</span>
-          </div>
-          <div class="metric-item">
-            <strong>BER:</strong> <span id="ber-value">--</span>
-          </div>
+          <div><strong>PSNR:</strong> <span id="psnr-value">--</span></div>
+          <div><strong>BER:</strong> <span id="ber-value">--</span></div>
         </div>
       </div>
+
     </div>
 
   </div>
 
   <script src="script.js"></script>
   <script src="script_image_preview.js"></script>
-</body>
 
+</body>
 </html>
