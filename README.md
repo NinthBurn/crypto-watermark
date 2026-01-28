@@ -4,6 +4,10 @@ Acest API permite încărcarea imaginilor, aplicarea watermark-ului și extrager
 
 Toate request-urile trebuie să fie de tip **`multipart/form-data`**.
 
+Pentru a rula server-ul: `uvicorn main:WatermarkAPI --reload`
+
+Se acceseaza UI de pe `localhost:8000/frontend`
+
 ---
 
 ## 1️⃣ Endpoint: Upload imagine cu watermark
