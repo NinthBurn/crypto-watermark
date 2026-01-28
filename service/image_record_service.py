@@ -48,48 +48,52 @@ class ImageRecordService:
 
     # --- Funcții de watermarking și metrici ---
 
-    def embed_watermark_dwt(self, image_path, watermark_path, alpha=0.1):
+    def embed_watermark_dwt(self, image_path, watermark_path, alpha=0.4):
         img = Image.open(image_path).convert("L")
         img_array = np.array(img, dtype=float)
 
-        coeffs2 = pywt.dwt2(img_array, 'haar')
-        LL, (LH, HL, HH) = coeffs2
+        # DWT nivel 1
+        LL, (LH, HL, HH) = pywt.dwt2(img_array, 'haar')
 
+        # Pregătire watermark
         watermark = Image.open(watermark_path).convert("L")
-        watermark = watermark.resize((LH.shape[1], LH.shape[0]))
+        watermark = watermark.resize((HL.shape[1], HL.shape[0]))
         wm_array = np.array(watermark, dtype=float) / 255.0
 
-        LH_wm = LH + alpha * wm_array
-        coeffs2_wm = (LL, (LH_wm, HL, HH))
+        # Binarizare watermark (important!)
+        wm_array = (wm_array > 0.5).astype(float)
 
+        # Inserare watermark în banda HL
+        HL_wm = HL + alpha * wm_array
+
+        # Reconstrucție imagine
+        coeffs2_wm = (LL, (LH, HL_wm, HH))
         watermarked_array = pywt.idwt2(coeffs2_wm, 'haar')
         watermarked_array = np.clip(watermarked_array, 0, 255).astype(np.uint8)
 
         watermarked_img = Image.fromarray(watermarked_array)
         watermarked_path = image_path.replace(".", "_wm.")
         watermarked_img.save(watermarked_path)
-        print("LH shape:", LH.shape)
-        print("Watermark shape:", wm_array.shape)
 
         return watermarked_path, wm_array
 
-    def extract_watermark_dwt(self, original_path, watermarked_path, alpha=0.1):
-
+    def extract_watermark_dwt(self, original_path, watermarked_path, alpha=0.4):
         orig = np.array(Image.open(original_path).convert("L"), dtype=float)
         wm = np.array(Image.open(watermarked_path).convert("L"), dtype=float)
 
-        if orig.shape != wm.shape:
-            raise ValueError("Original image and watermarked image must have the same size")
+        LL_o, (LH_o, HL_o, HH_o) = pywt.dwt2(orig, 'haar')
+        LL_w, (LH_w, HL_w, HH_w) = pywt.dwt2(wm, 'haar')
 
-        LL_o, (LH_o, _, _) = pywt.dwt2(orig, 'haar')
-        LL_w, (LH_w, _, _) = pywt.dwt2(wm, 'haar')
+        # Extragere watermark
+        extracted = (HL_w - HL_o) / alpha
 
-        extracted_wm = (LH_w - LH_o) / alpha
+        # Limitare valori în [0,1]
+        extracted = np.clip(extracted, 0, 1)
 
-        # normalizare robustă
-        extracted_wm = (extracted_wm - extracted_wm.min()) / (extracted_wm.max() - extracted_wm.min())
+        # Threshold simplu (eficient pentru watermark binar)
+        extracted = (extracted > 0.5).astype(float)
 
-        return extracted_wm
+        return extracted
 
     def save_extracted_watermark(self, extracted_wm_array, output_path):
 
