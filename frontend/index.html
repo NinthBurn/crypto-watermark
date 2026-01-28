@@ -22,19 +22,35 @@
 
         <div class="option-item">
           <label for="watermark-size">Watermark Size:</label>
-          <input type="number" id="watermark-size" min="0" value="64">
+          <input type="number" id="watermark-size" min="0" value="32">
         </div>
 
         <div class="option-item">
           <label for="dct-block-size">DCT Block Size:</label>
-          <input type="number" id="dct-block-size" min="0" value="0">
+          <input type="number" id="dct-block-size" min="0" value="8">
         </div>
 
         <div class="option-item">
           <label for="dct-coeffs">DCT Coefficients:</label>
-          <input type="number" id="dct-coeffs" min="0" value="0">
+          <input type="number" id="dct-coeffs" min="0" value="5">
         </div>
       </div>
+
+      <div class="option-item">
+          <label for="attack-type">Attack Type:</label>
+          <select id="attack-type" style="padding: 8px 12px; border-radius: 8px; border: 1.5px solid #cbd5e1; outline: none;">
+            <option value="">None</option>
+            <option value="NOISE">Gaussian Noise</option>
+            <option value="BLUR">Gaussian Blur</option>
+            <option value="JPEG">JPEG Compression</option>
+          </select>
+        </div>
+
+        <div class="option-item">
+          <label for="attack-param">Attack Intensity:</label>
+          <input type="number" id="attack-param" step="0.01" placeholder="e.g. 30 or 0.01">
+        </div>
+        </div>
 
       <div class="option-item">
         <label for="embed-method">Method:</label>

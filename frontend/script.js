@@ -8,7 +8,9 @@ function getEmbedOptions() {
     watermarkSize: Number(document.getElementById('watermark-size').value),
     dctBlockSize: Number(document.getElementById('dct-block-size').value),
     dctCoeffs: Number(document.getElementById('dct-coeffs').value),
-    coloredImage: document.getElementById('colored-image').checked
+    coloredImage: document.getElementById('colored-image').checked,
+    attackType: document.getElementById('attack-type').value,
+    attackParam: document.getElementById('attack-param').value
   };
 }
 
@@ -25,6 +27,23 @@ function getFormDataWithOptions() {
 
   return formData;
 }
+
+function getExtractFormDataWithOptions() {
+  const formData = getFormDataWithOptions();
+  const options = getEmbedOptions();
+
+  if (options.attackType) {
+    formData.append('attack_type', options.attackType);
+
+    if (options.attackParam) {
+      formData.append('attack_param', options.attackParam.toString());
+    }
+  }
+
+  return formData;
+}
+
+
 document.getElementById('embed-btn').addEventListener('click', () => {
   const options = getEmbedOptions();
   console.log(options);
@@ -69,24 +88,29 @@ document.getElementById('extract-btn').addEventListener('click', async () => {
     return;
   }
 
-  const formData = getFormDataWithOptions();
+  const formData = getExtractFormDataWithOptions();
   formData.append('original_image', original);
   formData.append('watermarked_image', watermarked);
 
-  const response = await fetch(`${server}/images/extract-watermark`, {
-    method: 'POST',
-    body: formData
-  });
+  try {
+    const response = await fetch(`${server}/images/extract-watermark`, {
+      method: 'POST',
+      body: formData
+    });
 
-  if (!response.ok) {
-    alert('Extraction failed');
-    return;
+    if (!response.ok) {
+      alert('Extraction failed');
+      return;
+    }
+
+    const blob = await response.blob();
+    const url = URL.createObjectURL(blob);
+    document.getElementById('extract-result').src = url;
+
+  } catch (err) {
+    console.error(err);
+    alert('Server error during extraction');
   }
-
-  const blob = await response.blob();
-  const url = URL.createObjectURL(blob);
-
-  document.getElementById('extract-result').src = url;
 });
 
 document.getElementById("metrics-btn").addEventListener("click", async () => {
