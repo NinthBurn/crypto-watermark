@@ -1,6 +1,6 @@
 # API Watermarking – Front-End
 
-Acest API permite încărcarea imaginilor, aplicarea watermark-ului și extragerea watermark-ului folosind metodele **DWT** sau **DCT** (DCT neimplementat încă).  
+Acest API permite încărcarea imaginilor, aplicarea watermark-ului și extragerea acestuia folosind metodele DWT, DCT și HYBRID (DWT-DCT). De asemenea, include funcționalități pentru testarea robusteții prin simularea de atacuri (zgomot, blur, compresie).
 
 Toate request-urile trebuie să fie de tip **`multipart/form-data`**.
 
@@ -63,6 +63,24 @@ Se acceseaza UI de pe `localhost:8000/frontend`
 - Returnează **fișierul cu watermark-ul extras**.  
 - Numele fișierului returnat: `extracted_<nume_fișier>`.  
 - Tip media: același ca imaginea originală (jpg/png).  
+
+Opțional, poate aplica un atac asupra imaginii înainte de extracție pentru a testa rezistența.
+
+**Form-data fields:**
+
+| Key                 | Type               | Descriere                                                                       |
+| ------------------- |--------------------| ------------------------------------------------------------------------------- |
+| `original_image`    | File               | Imaginea originală curată                              |
+| `watermarked_image` | File               | Imaginea marcată (rezultată din endpoint-ul de upload)                          |
+| `method`            | Text               | Metoda folosită la inserare (`DWT`, `DCT`, `HYBRID`)                            |
+| `format`            | Text               | Formatul imaginii (`image/png`, `image/jpeg`)                                   |
+| `image_size`        | Text                | Dimensiunea imaginii (ex: `512`)                                                |
+| `watermark_size`    | Text                | Dimensiunea watermark-ului (ex: `32`)                                           |
+| `dct_block_size`    | Text                | Dimensiunea blocului DCT (ex: `8`)                                              |
+| `dct_coeffs`        | Text               | Poziția coeficienților DCT (ex: `5`)                                            |
+| `is_image_colored`  | Text               | `true` dacă imaginea este color, `false` dacă este grayscale                    |
+| `attack_type`       | Text *(opțional)*  | Tipul atacului: `NOISE`, `BLUR`, `JPEG`                                         |
+| `attack_param`      | Float *(opțional)* | Intensitatea atacului (ex: `0.01` pentru NOISE, `2` pentru BLUR, `50` pentru JPEG) |
 
 ---
 

@@ -44,12 +44,11 @@ class HybridWatermark:
         # watermark
         watermark = Image.open(watermark_path).convert("L")
         watermark = watermark.resize(
-            (num_blocks_w, num_blocks_h),
-            Image.Resampling.BICUBIC
+            (num_blocks_w, num_blocks_h), Image.Resampling.BICUBIC
         )
-
         wm = np.array(watermark, dtype=np.float32) / 255.0
         wm = (wm > 0.5).astype(np.float32).flatten()
+        wm = wm[:num_blocks_h * num_blocks_w]
 
         idx = 0
         for i in range(0, num_blocks_h * self.block_size, self.block_size):
@@ -93,21 +92,18 @@ class HybridWatermark:
         # DWT
         _, (LH, _, _) = pywt.dwt2(channel, 'haar')
 
-        extracted = []
-
         num_blocks_h = LH.shape[0] // self.block_size
         num_blocks_w = LH.shape[1] // self.block_size
 
+        extracted = []
         for i in range(0, num_blocks_h * self.block_size, self.block_size):
             for j in range(0, num_blocks_w * self.block_size, self.block_size):
                 block = LH[i:i + self.block_size, j:j + self.block_size]
                 dct_block = self.apply_dct_block(block)
-
                 val = dct_block[self.cx, self.cy] / self.alpha
                 extracted.append(val)
 
-        wm = np.array(extracted[: wm_shape[0] * wm_shape[1]])
-        wm = wm.reshape(wm_shape)
-
+        wm = np.array(extracted[:num_blocks_h * num_blocks_w])
+        wm = wm.reshape((num_blocks_h, num_blocks_w))
         wm = np.clip(wm * 255, 0, 255).astype(np.uint8)
         return wm

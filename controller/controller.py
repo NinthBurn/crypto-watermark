@@ -10,6 +10,7 @@ from service.image_record_service import ImageRecordService
 from repository.image_record_repo import ImageRecordRepository
 from watermarking.DCT import DCTWatermark
 from watermarking.hybrid import HybridWatermark
+from watermarking.attacks import ImageAttacks
 
 router = APIRouter()
 repository = ImageRecordRepository()
@@ -98,7 +99,6 @@ async def upload_image(
         filename=f"watermarked_{file.filename}"
     )
 
-
 @router.post("/images/extract-watermark/", response_model=dict)
 async def extract_watermark(
     original_image: UploadFile = File(...),
@@ -109,7 +109,9 @@ async def extract_watermark(
     watermark_size: int = Form(...),
     dct_block_size: int = Form(...),
     dct_coeffs: int = Form(...),
-    is_image_colored: bool = Form(...)
+    is_image_colored: bool = Form(...),
+    attack_type: str = Form(None),       # "NOISE", "BLUR", "JPEG"
+    attack_param: float = Form(None)     # attack intensity
 ):
     # Salvare locală
     global extracted_path
@@ -122,50 +124,64 @@ async def extract_watermark(
         f.write(await watermarked_image.read())
 
     method = method.upper()
+    extracted_path = os.path.join(UPLOAD_DIR, "extracted_" + original_image.filename)
+
+    attacked_path = wm_path
+    if attack_type:
+        attacked_path = os.path.join(
+            UPLOAD_DIR,
+            f"attacked_{watermarked_image.filename}"
+        )
+
+        match attack_type.upper():
+            case "NOISE":
+                ImageAttacks.gaussian_noise(
+                    image_path=wm_path,
+                    output_path=attacked_path,
+                    var=attack_param or 10
+                )
+            case "BLUR":
+                ImageAttacks.gaussian_blur(
+                    image_path=wm_path,
+                    output_path=attacked_path,
+                    radius=attack_param or 2
+                )
+            case "JPEG":
+                ImageAttacks.jpeg_compression(
+                    image_path=wm_path,
+                    output_path=attacked_path,
+                    quality=int(attack_param or 30)
+                )
+            case _:
+                raise HTTPException(400, detail="Unsupported attack type")
 
     try:
-        extracted_path = os.path.join(
-            UPLOAD_DIR,
-            "extracted_" + original_image.filename
-        )
-        
-        image_size = image_size if image_size > 0 else 512
-        watermark_size = watermark_size if watermark_size > 0 else 32
-        dct_block_size = dct_block_size if dct_block_size > 0 else 8
-        dct_coeffs = dct_coeffs if dct_coeffs > 0 else 5
-
         match method:
             case "DWT":
                 extracted_wm = service.extract_watermark_dwt(
                     original_path=orig_path,
-                    watermarked_path=wm_path
-                )
-                extracted_path = os.path.join(
-                    UPLOAD_DIR,
-                    "extracted_" + original_image.filename
+                    watermarked_path=attacked_path
                 )
                 service.save_extracted_watermark(extracted_wm, extracted_path)
 
             case "DCT":
                 watermark_size = image_size // dct_block_size
                 wm = DCTWatermark(dct_block_size, (dct_coeffs, dct_coeffs))
-                
+
                 if is_image_colored:
-                    image = wm.load_color(wm_path, size=image_size)
+                    image = wm.load_color(attacked_path, size=image_size)
                     extracted_watermark = wm.extract_color(image, (watermark_size, watermark_size))
                     wm.save_grayscale(extracted_watermark, extracted_path)
                 else:
-                    image = wm.load_grayscale(wm_path, size=image_size)
+                    image = wm.load_grayscale(attacked_path, size=image_size)
                     extracted_watermark = wm.extract_grayscale(image, (watermark_size, watermark_size))
                     wm.save_grayscale(extracted_watermark, extracted_path)
-                    
+
             case "HYBRID":
                 wm = HybridWatermark(dct_block_size, (dct_coeffs, dct_coeffs))
-                
-                # TODO: determine the shape of watermark based on the input
-                array = wm.extract(wm_path, (32, 32))
+                array = wm.extract(attacked_path, (watermark_size, watermark_size))
                 Image.fromarray(array).save(extracted_path)
-                
+
             case _:
                 raise HTTPException(
                     status_code=400,
